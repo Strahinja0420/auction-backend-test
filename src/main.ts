@@ -16,7 +16,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe())
   app.use(cookieParser)
 
-  app.use('/files',express.static('files'))
+  // app.use('/files',express.static('files'))
 
   const PORT = env.PORT || 8080;
   await app.listen(PORT);
