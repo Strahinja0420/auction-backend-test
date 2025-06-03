@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuctionStatus{
+  DRAFT
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum AuctionCategory{
+  SPORTS
+  TOYS
+  FASHION
+  ELECTRONICS
+  BOOKS
+  OTHER
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Auction relationships
+  createdAuctions Auction[] @relation("AuctionCreator")
+  bids           Bid[]
+
+  @@map("users")
+}
+
+model Auction {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String
+  category    AuctionCategory
+  status      AuctionStatus @default(DRAFT)
+  
+  // Pricing
+  startingBid Decimal       @db.Decimal(10, 2)
+  currentBid  Decimal?      @db.Decimal(10, 2)
+  reservePrice Decimal?     @db.Decimal(10, 2)
+  buyNowPrice Decimal?      @db.Decimal(10, 2)
+  
+  // Timing
+  startTime   DateTime
+  endTime     DateTime
+  
+  // Media
+  images      String[]      @default([])
+  
+  // Relationships
+  creatorId   Int
+  creator     User          @relation("AuctionCreator", fields: [creatorId], references: [id])
+  bids        Bid[]
+  
+  // Metadata
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("auctions")
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  amount    Decimal  @db.Decimal(10, 2)
+  
+  // Relationships
+  auctionId Int
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  bidderId  Int
+  bidder    User     @relation(fields: [bidderId], references: [id])
+  
+  createdAt DateTime @default(now())
+
+  @@map("bids")
+}
